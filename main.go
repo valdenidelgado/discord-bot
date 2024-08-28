@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
+	"net/http"
 
 	"github.com/valdenidelgado/cubi-bot/ai"
 	"github.com/valdenidelgado/cubi-bot/discord"
@@ -24,7 +22,5 @@ func main() {
 
 	fmt.Println("the bot is online")
 
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	<-sc
+	http.ListenAndServe(":8080", nil)
 }
