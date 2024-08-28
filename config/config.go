@@ -21,3 +21,7 @@ func GetAPIKey() string {
 func GetDiscordKey() string {
 	return os.Getenv("DISCORD_KEY")
 }
+
+func GetChannelKey() string {
+	return os.Getenv("DISCORD_CHANNEL_ID")
+}
