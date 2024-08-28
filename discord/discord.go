@@ -56,7 +56,6 @@ func RegisterHandlers(sess *discordgo.Session, client *ai.GeminiAI) {
 
 	sess.AddHandler(func(s *discordgo.Session, a *discordgo.GuildMemberAdd) {
 		message := fmt.Sprintf("Faz um belo bem vindo ao servidor para o usuario, %s!", a.User.GlobalName)
-		// channelID := os.Getenv("DISCORD_CHANNEL_ID")
 		channelID := config.GetChannelKey()
 		responses := client.GenerateMessage(message)
 		for _, response := range responses {

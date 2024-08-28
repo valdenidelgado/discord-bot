@@ -8,13 +8,10 @@ import (
 	"syscall"
 
 	"github.com/valdenidelgado/cubi-bot/ai"
-	"github.com/valdenidelgado/cubi-bot/config"
 	"github.com/valdenidelgado/cubi-bot/discord"
 )
 
 func main() {
-	config.LoadEnv()
-
 	session := discord.SetupDiscordBot()
 
 	ctx := context.Background()
