@@ -3,24 +3,39 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/valdenidelgado/cubi-bot/ai"
+	"github.com/valdenidelgado/cubi-bot/config"
 	"github.com/valdenidelgado/cubi-bot/discord"
 )
 
 func main() {
-	session := discord.SetupDiscordBot()
+	defer handlePanic()
+	config.LoadEnv()
+
+	sess := discord.NewBot()
 
 	ctx := context.Background()
 	client := ai.NewGenAIClient(ctx)
 
-	discord.RegisterHandlers(session, client)
+	sess.RegisterHandlers(client)
 
-	defer session.Close()
+	defer sess.Session.Close()
 	defer client.Client.Close()
 
 	fmt.Println("the bot is online")
 
-	http.ListenAndServe(":8080", nil)
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	<-sc
+}
+
+func handlePanic() {
+	if r := recover(); r != nil {
+		log.Printf("Recuperado de um erro crítico: %v", r)
+	}
 }
