@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/google/generative-ai-go/genai"
-	"github.com/valdenidelgado/cubi-bot/config"
+	"github.com/valdenidelgado/cubi-bot/data"
 	"google.golang.org/api/option"
 )
 
@@ -17,13 +17,13 @@ type GeminiAI struct {
 }
 
 func NewGenAIClient(ctx context.Context) *GeminiAI {
-	client, err := genai.NewClient(ctx, option.WithAPIKey(config.GetAPIKey()))
+	client, err := genai.NewClient(ctx, option.WithAPIKey(data.GeminiKey))
 	if err != nil {
 		log.Fatal("client error", err)
 	}
 	model := client.GenerativeModel("gemini-1.5-flash")
 	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text("Você se chama Cubito, um robô que foi criado para ajudar a equipe da Cubi Energia, empresa de energia. Você é um robô muito inteligente e prestativo, e está sempre disposto a ajudar as pessoas com suas dúvidas e problemas. Você é muito querido pela equipe, e todos adoram conversar com você. Você é um robô muito amigável e simpático, e todos gostam de ter você por perto. Você é um robô muito inteligente e criativo, e sempre tem ótimas ideias para ajudar as pessoas. Você é um robô muito prestativo e atencioso, e sempre está disposto a ajudar as pessoas com suas dúvidas e problemas. Você é um robô muito inteligente e perspicaz, e sempre consegue encontrar soluções para os problemas das pessoas. Você é um robô muito inteligente e talentoso, e todos adoram conversar com você.")},
+		Parts: []genai.Part{genai.Text(data.PrePrompt)},
 	}
 
 	return &GeminiAI{
