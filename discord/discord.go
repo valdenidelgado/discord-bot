@@ -3,34 +3,52 @@ package discord
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"strings"
 	"time"
 
-	"math/rand"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/valdenidelgado/cubi-bot/ai"
-	"github.com/valdenidelgado/cubi-bot/config"
+	"github.com/valdenidelgado/cubi-bot/cubi/api"
+	"github.com/valdenidelgado/cubi-bot/data"
 )
 
-func SetupDiscordBot() *discordgo.Session {
-	sess, err := discordgo.New(fmt.Sprintf("Bot %s", config.GetDiscordKey()))
+type Bot struct {
+	Session *discordgo.Session
+	Api     *api.API
+}
+
+func NewBot() *Bot {
+	api := api.New()
+	sess := setupDiscordSession()
+	return &Bot{
+		Session: sess,
+		Api:     api,
+	}
+}
+
+func setupDiscordSession() *discordgo.Session {
+	sess, err := discordgo.New(fmt.Sprintf("Bot %s", data.DiscordKeyV2))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error creating Discord session: ", err)
 	}
 
-	sess.Identify.Intents = discordgo.IntentsAllWithoutPrivileged | discordgo.IntentsGuildMembers | discordgo.IntentsGuilds
+	sess.Identify.Intents = discordgo.IntentsAllWithoutPrivileged | discordgo.IntentsGuildMembers | discordgo.IntentsGuilds | discordgo.IntentsGuildMessages | discordgo.IntentsGuildMessageReactions
 	err = sess.Open()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error opening connection: ", err)
 	}
 
 	return sess
 }
 
-func RegisterHandlers(sess *discordgo.Session, client *ai.GeminiAI) {
+func (b *Bot) RegisterHandlers(client *ai.GeminiAI) {
+	b.RegisterCommands()
 
-	sess.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	b.Session.AddHandler(b.interactionCreate)
+	b.Session.AddHandler(b.autocomplete)
+
+	b.Session.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if m.Author.ID == s.State.User.ID {
 			return
 		}
@@ -43,10 +61,10 @@ func RegisterHandlers(sess *discordgo.Session, client *ai.GeminiAI) {
 			reviewers = reviewers[1:]
 			rand.New(rand.NewSource(time.Now().UnixNano()))
 			rand.Shuffle(len(reviewers), func(i, j int) { reviewers[i], reviewers[j] = reviewers[j], reviewers[i] })
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Reviewers da sprint %s -> %s -> %s", reviewers[0], reviewers[1], reviewers[2]))
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Reviewers da sprint %s -> %s -> %s -> %s", reviewers[0], reviewers[1], reviewers[2], reviewers[3]))
 		}
 
-		if strings.HasPrefix(content, "Cubito") || strings.HasPrefix(content, "cubito") {
+		if strings.Contains(content, "Cubito") || strings.Contains(content, "cubito") {
 			responses := client.GenerateMessage(content)
 			for _, response := range responses {
 				s.ChannelMessageSend(m.ChannelID, response)
@@ -54,9 +72,9 @@ func RegisterHandlers(sess *discordgo.Session, client *ai.GeminiAI) {
 		}
 	})
 
-	sess.AddHandler(func(s *discordgo.Session, a *discordgo.GuildMemberAdd) {
+	b.Session.AddHandler(func(s *discordgo.Session, a *discordgo.GuildMemberAdd) {
 		message := fmt.Sprintf("Faz um belo bem vindo ao servidor para o usuario, %s!", a.User.GlobalName)
-		channelID := config.GetChannelKey()
+		channelID := "870419677434744865"
 		responses := client.GenerateMessage(message)
 		for _, response := range responses {
 			_, err := s.ChannelMessageSend(channelID, response)
